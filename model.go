@@ -2,12 +2,13 @@ package snippets
 
 // User represents a registered person of this application who can create snippets
 type User struct {
-	ID           string `json:"userId"`
-	FirstName    string `json:"firstName"`
-	LastName     string `json:"lastName"`
-	Email        string `json:"email"`
-	Username     string `json:"username"`
-	PasswordHash string `json:"-"`
+	ID           string `json:"userId" db:"id"`
+	Email        string `json:"email" db:"email"`
+	Username     string `json:"username" db:"username"`
+	PasswordHash string `json:"-" db:"password_hash"`
+	PasswordSalt string `json:"-" db:"password_salt"`
+	FirstName    string `json:"firstName" db:"first_name"`
+	LastName     string `json:"lastName" db:"last_name"`
 	// Created/Updated datetime
 }
 
@@ -22,10 +23,10 @@ type UserService interface {
 
 // Snippet represents a piece of code published by a user
 type Snippet struct {
-	ID          string `json:"snippetId"`
-	Filename    string `json:"filename"`
-	Description string `json:"description"`
-	Public      bool   `json:"isPublic"`
+	ID          string `json:"snippetId" db:"id"`
+	Filename    string `json:"filename" db:"filename"`
+	Description string `json:"description" db:"description"`
+	Public      bool   `json:"isPublic" db:"is_public"`
 	// Created/Updated datetime
 }
 
