@@ -5,7 +5,7 @@ type User struct {
 	ID           string `json:"userId" db:"id"`
 	Email        string `json:"email" db:"email"`
 	Username     string `json:"username" db:"username"`
-	Password     string `json:"-"`
+	Password     string `json:"password"`
 	PasswordHash string `json:"-" db:"password_hash"`
 	FirstName    string `json:"firstName" db:"first_name"`
 	LastName     string `json:"lastName" db:"last_name"`
