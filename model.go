@@ -7,7 +7,6 @@ type User struct {
 	Username     string `json:"username" db:"username"`
 	Password     string `json:"-"`
 	PasswordHash string `json:"-" db:"password_hash"`
-	PasswordSalt string `json:"-" db:"password_salt"`
 	FirstName    string `json:"firstName" db:"first_name"`
 	LastName     string `json:"lastName" db:"last_name"`
 	// Created/Updated datetime
@@ -42,6 +41,6 @@ type SnippetService interface {
 
 // HashUtilities provides a set of operations relating to hashing and hash comparisons
 type HashUtilities interface {
-	Hash(s string) (string, error)
+	HashAndSalt(s string) (string, error)
 	CompareHashWithString(hash string, s string) bool
 }
