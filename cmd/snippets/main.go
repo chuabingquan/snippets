@@ -5,7 +5,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 
+	"github.com/chuabingquan/snippets/bcrypt"
 	"github.com/chuabingquan/snippets/http"
 	"github.com/chuabingquan/snippets/postgres"
 	"github.com/joho/godotenv"
@@ -32,8 +34,14 @@ func main() {
 	}
 	defer db.Close()
 
+	hashCost, err := strconv.Atoi(config["HASH_COST"])
+	if err != nil {
+		log.Fatal("Failed to parse hash cost environment variable: " + err.Error())
+	}
+
+	hu := bcrypt.Utilities{HashCost: hashCost}
 	us := postgres.UserService{DB: db}
-	userHandler := http.NewUserHandler(us)
+	userHandler := http.NewUserHandler(us, hu)
 
 	handler := http.Handler{
 		UserHandler: userHandler,
@@ -63,7 +71,8 @@ func loadEnvironmentVariables() {
 
 func getConfig() map[string]string {
 	config := make(map[string]string)
-	envNames := []string{"DB_PROTOCOL", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_NAME", "DB_SSLMODE", "PORT"}
+	envNames := []string{"DB_PROTOCOL", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_NAME", "DB_SSLMODE",
+		"PORT", "HASH_COST"}
 	for _, name := range envNames {
 		val, ok := os.LookupEnv(name)
 		if !ok {
