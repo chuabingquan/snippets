@@ -12,14 +12,16 @@ import (
 // UserHandler is a sub-router that handles requests related to operations on Users
 type UserHandler struct {
 	*mux.Router
-	UserService snippets.UserService
+	UserService   snippets.UserService
+	HashUtilities snippets.HashUtilities
 }
 
 // NewUserHandler constructs a new UserHandler given a UserService implementation
-func NewUserHandler(us snippets.UserService) *UserHandler {
+func NewUserHandler(us snippets.UserService, hu snippets.HashUtilities) *UserHandler {
 	h := &UserHandler{
-		Router:      mux.NewRouter(),
-		UserService: us,
+		Router:        mux.NewRouter(),
+		UserService:   us,
+		HashUtilities: hu,
 	}
 
 	h.Handle("/api/v0/users", Adapt(http.HandlerFunc(h.handleGetUsers))).Methods("GET")
@@ -66,8 +68,14 @@ func (uh UserHandler) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: HANDLE PASSWORD HASH AND SALT GENERATION
 	newUser.ID = uuid.New().String()
+	hash, err := uh.HashUtilities.HashAndSalt(newUser.Password)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when creating user"})
+		return
+	}
+	newUser.PasswordHash = hash
 
 	err = uh.UserService.CreateUser(newUser)
 	if err != nil {
