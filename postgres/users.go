@@ -51,7 +51,7 @@ func (us UserService) Users() ([]snippets.User, error) {
 
 // CreateUser inserts the data from a given snippets.User instance into the database
 func (us UserService) CreateUser(u snippets.User) error {
-	_, err := us.DB.NamedExec(`INSERT INTO account VALUES(:id, :email, :username, :password_hash, :password_salt, :first_name, :last_name)`, u)
+	_, err := us.DB.NamedExec(`INSERT INTO account VALUES(:id, :email, :username, :password_hash, :first_name, :last_name)`, u)
 	if err != nil {
 		return errors.New("Error creating user: " + err.Error())
 	}
@@ -61,7 +61,7 @@ func (us UserService) CreateUser(u snippets.User) error {
 // UpdateUser takes in a snippets.User instance and updates the relevant database user record accordingly
 func (us UserService) UpdateUser(userID string, updatedUser snippets.User) error {
 	res, err := us.DB.NamedExec(`UPDATE account SET email=:email, username=:username, password_hash=:password_hash, 
-		password_salt=:password_salt, first_name=:first_name, last_name=:last_name WHERE id=:id`, updatedUser)
+					first_name=:first_name, last_name=:last_name WHERE id=:id`, updatedUser)
 	if err != nil {
 		return errors.New("Error updating user: " + err.Error())
 	}
