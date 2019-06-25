@@ -5,6 +5,7 @@ type User struct {
 	ID           string `json:"userId" db:"id"`
 	Email        string `json:"email" db:"email"`
 	Username     string `json:"username" db:"username"`
+	Password     string `json:"-"`
 	PasswordHash string `json:"-" db:"password_hash"`
 	PasswordSalt string `json:"-" db:"password_salt"`
 	FirstName    string `json:"firstName" db:"first_name"`
@@ -37,4 +38,10 @@ type SnippetService interface {
 	CreateSnippet(UserID string, s Snippet) error
 	UpdateSnippet(UserID string, snippetID string, updatedSnippet Snippet) error
 	DeleteSnippet(UserID string, snippetID string) error
+}
+
+// HashUtilities provides a set of operations relating to hashing and hash comparisons
+type HashUtilities interface {
+	Hash(s string) (string, error)
+	CompareHashWithString(hash string, s string) bool
 }
