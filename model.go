@@ -17,7 +17,7 @@ type UserService interface {
 	User(userID string) (User, error)
 	Users() ([]User, error)
 	CreateUser(u User) error
-	UpdateUser(userID string, updatedUser User) error
+	UpdateUser(updatedUser User) error
 	DeleteUser(userID string) error
 }
 
