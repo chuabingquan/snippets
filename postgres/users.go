@@ -67,6 +67,15 @@ func (us UserService) CreateUser(u snippets.User) error {
 
 // UpdateUser takes in a snippets.User instance and updates the relevant database user record accordingly
 func (us UserService) UpdateUser(updatedUser snippets.User) error {
+	// only create new password hash if user updates their password (password pointer field not nil)
+	if updatedUser.Password != "" {
+		hash, err := us.HashUtilities.HashAndSalt(updatedUser.Password)
+		if err != nil {
+			return errors.New("Error updating user: " + err.Error())
+		}
+		updatedUser.PasswordHash = hash
+	}
+
 	res, err := us.DB.NamedExec(`UPDATE account SET email=:email, username=:username, password_hash=:password_hash, 
 					first_name=:first_name, last_name=:last_name WHERE id=:id`, updatedUser)
 	if err != nil {
