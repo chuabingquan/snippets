@@ -89,8 +89,40 @@ func (uh UserHandler) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 // handlePatchUser
 func (uh UserHandler) handlePatchUser(w http.ResponseWriter, r *http.Request) {
-	// TODO: IMPLEMENT HANDLEPATCHUSER
-	w.WriteHeader(http.StatusOK)
+	userID := mux.Vars(r)["userID"]
+	userToUpdate, err := uh.UserService.User(userID)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when getting requested user"})
+		return
+	}
+
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	err = dec.Decode(&userToUpdate)
+	if err != nil {
+		createResponse(w, http.StatusBadRequest, defaultResponse{
+			"JSON could not be decoded, invalid request format supplied"})
+		return
+	}
+
+	// validation
+	if userToUpdate.ID != userID {
+		// Prevent attackers from updating another user's information by using
+		// a different userID supplied in JSON from the one specified in the url params
+		createResponse(w, http.StatusBadRequest, defaultResponse{
+			"JSON could not be decoded, invalid request format supplied"})
+		return
+	}
+
+	err = uh.UserService.UpdateUser(userToUpdate)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when updating user"})
+		return
+	}
+
+	createResponse(w, http.StatusOK, defaultResponse{"User is successfully updated"})
 }
 
 // handleDeleteUser
