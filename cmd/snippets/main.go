@@ -40,8 +40,8 @@ func main() {
 	}
 
 	hu := bcrypt.Utilities{HashCost: hashCost}
-	us := postgres.UserService{DB: db}
-	userHandler := http.NewUserHandler(us, hu)
+	us := postgres.UserService{DB: db, HashUtilities: hu}
+	userHandler := http.NewUserHandler(us)
 
 	handler := http.Handler{
 		UserHandler: userHandler,

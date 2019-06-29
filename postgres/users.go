@@ -9,7 +9,8 @@ import (
 
 // UserService implements the snippets.UserService interface
 type UserService struct {
-	DB *sqlx.DB
+	DB            *sqlx.DB
+	HashUtilities snippets.HashUtilities
 }
 
 // User returns a snippets.User after querying from the database given a userID,
@@ -51,7 +52,13 @@ func (us UserService) Users() ([]snippets.User, error) {
 
 // CreateUser inserts the data from a given snippets.User instance into the database
 func (us UserService) CreateUser(u snippets.User) error {
-	_, err := us.DB.NamedExec(`INSERT INTO account(email, username, password_hash, first_name, last_name) VALUES(:email, :username, :password_hash, :first_name, :last_name)`, u)
+	hash, err := us.HashUtilities.HashAndSalt(u.Password)
+	if err != nil {
+		return errors.New("Error creating user: " + err.Error())
+	}
+	u.PasswordHash = hash
+
+	_, err = us.DB.NamedExec(`INSERT INTO account(email, username, password_hash, first_name, last_name) VALUES(:email, :username, :password_hash, :first_name, :last_name)`, u)
 	if err != nil {
 		return errors.New("Error creating user: " + err.Error())
 	}

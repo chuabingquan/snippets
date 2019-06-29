@@ -11,16 +11,14 @@ import (
 // UserHandler is a sub-router that handles requests related to operations on Users
 type UserHandler struct {
 	*mux.Router
-	UserService   snippets.UserService
-	HashUtilities snippets.HashUtilities
+	UserService snippets.UserService
 }
 
 // NewUserHandler constructs a new UserHandler given a UserService implementation
-func NewUserHandler(us snippets.UserService, hu snippets.HashUtilities) *UserHandler {
+func NewUserHandler(us snippets.UserService) *UserHandler {
 	h := &UserHandler{
-		Router:        mux.NewRouter(),
-		UserService:   us,
-		HashUtilities: hu,
+		Router:      mux.NewRouter(),
+		UserService: us,
 	}
 
 	h.Handle("/api/v0/users", Adapt(http.HandlerFunc(h.handleGetUsers))).Methods("GET")
@@ -66,14 +64,6 @@ func (uh UserHandler) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 			"Invalid request body"})
 		return
 	}
-
-	hash, err := uh.HashUtilities.HashAndSalt(newUser.Password)
-	if err != nil {
-		createResponse(w, http.StatusInternalServerError, defaultResponse{
-			"An unexpected error occurred when creating user"})
-		return
-	}
-	newUser.PasswordHash = hash
 
 	err = uh.UserService.CreateUser(newUser)
 	if err != nil {
