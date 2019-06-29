@@ -51,7 +51,7 @@ func (us UserService) Users() ([]snippets.User, error) {
 
 // CreateUser inserts the data from a given snippets.User instance into the database
 func (us UserService) CreateUser(u snippets.User) error {
-	_, err := us.DB.NamedExec(`INSERT INTO account VALUES(:id, :email, :username, :password_hash, :first_name, :last_name)`, u)
+	_, err := us.DB.NamedExec(`INSERT INTO account(email, username, password_hash, first_name, last_name) VALUES(:email, :username, :password_hash, :first_name, :last_name)`, u)
 	if err != nil {
 		return errors.New("Error creating user: " + err.Error())
 	}

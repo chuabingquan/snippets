@@ -1,7 +1,9 @@
 CREATE DATABASE snippetsDB;
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE account (
-    id uuid PRIMARY KEY,
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     username VARCHAR(25) UNIQUE NOT NULL,
     password_hash text NOT NULL,
@@ -10,7 +12,7 @@ CREATE TABLE account (
 );
 
 CREATE TABLE snippet (
-    id uuid PRIMARY KEY,
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     account_id uuid NOT NULL REFERENCES account(id),
     filename VARCHAR(255) NOT NULL,
     description VARCHAR(255),

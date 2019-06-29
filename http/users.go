@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/chuabingquan/snippets"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -68,7 +67,6 @@ func (uh UserHandler) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newUser.ID = uuid.New().String()
 	hash, err := uh.HashUtilities.HashAndSalt(newUser.Password)
 	if err != nil {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
