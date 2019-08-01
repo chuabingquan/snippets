@@ -1,2 +1,2 @@
 # Snippets
-Snippets is a simple Github Gist clone that is built to familiarise myself with developing CRUD web applications in Golang.
+Snippets is a simple Github Gist clone that I'm building to familiarise myself with web application development in Go.
