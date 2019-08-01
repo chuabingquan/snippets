@@ -26,7 +26,7 @@ func (ss SnippetService) Snippet(userID string, snippetID string) (snippets.Snip
 // Snippets queries the database and returns a slice of snippets.Snippet given
 // a userID they associate with
 func (ss SnippetService) Snippets(userID string) ([]snippets.Snippet, error) {
-	var snippetSlice []snippets.Snippet
+	snippetSlice := []snippets.Snippet{}
 	rows, err := ss.DB.Queryx("SELECT * FROM snippet WHERE account_id=$1", userID)
 	if err != nil {
 		return nil, errors.New("Error retrieving snippets: " + err.Error())

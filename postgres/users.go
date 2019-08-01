@@ -26,7 +26,7 @@ func (us UserService) User(userID string) (snippets.User, error) {
 
 // Users returns all users from the database in the form of a snippets.User slice
 func (us UserService) Users() ([]snippets.User, error) {
-	var users []snippets.User
+	users := []snippets.User{}
 	rows, err := us.DB.Queryx("SELECT * FROM account")
 	if err != nil {
 		return nil, errors.New("Error retrieving users: " + err.Error())
