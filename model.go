@@ -27,16 +27,17 @@ type Snippet struct {
 	Filename    string `json:"filename" db:"filename"`
 	Description string `json:"description" db:"description"`
 	Public      bool   `json:"isPublic" db:"is_public"`
+	Owner       string `json:"-" db:"account_id"`
 	// Created/Updated datetime
 }
 
 // SnippetService provides a set of operations that can be applied to the Snippet struct
 type SnippetService interface {
-	Snippet(UserID string, snippetID string) (Snippet, error)
-	Snippets(UserID string) ([]Snippet, error)
-	CreateSnippet(UserID string, s Snippet) error
-	UpdateSnippet(UserID string, snippetID string, updatedSnippet Snippet) error
-	DeleteSnippet(UserID string, snippetID string) error
+	Snippet(userID string, snippetID string) (Snippet, error)
+	Snippets(userID string) ([]Snippet, error)
+	CreateSnippet(s Snippet) error
+	UpdateSnippet(updatedSnippet Snippet) error
+	DeleteSnippet(userID string, snippetID string) error
 }
 
 // HashUtilities provides a set of operations relating to hashing and hash comparisons
