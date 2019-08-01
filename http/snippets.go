@@ -32,7 +32,7 @@ func NewSnippetHandler(ss snippets.SnippetService) *SnippetHandler {
 
 // handleGetSnippets
 func (sh SnippetHandler) handleGetSnippets(w http.ResponseWriter, r *http.Request) {
-	userID := r.URL.Query().Get("userId")
+	userID := r.Header.Get("Authorization")
 	snippets, err := sh.SnippetService.Snippets(userID)
 	if err != nil {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
@@ -45,7 +45,7 @@ func (sh SnippetHandler) handleGetSnippets(w http.ResponseWriter, r *http.Reques
 // handleGetSnippetByID
 func (sh SnippetHandler) handleGetSnippetByID(w http.ResponseWriter, r *http.Request) {
 	snippetID := mux.Vars(r)["snippetID"]
-	userID := r.URL.Query().Get("userId")
+	userID := r.Header.Get("Authorization")
 
 	snippet, err := sh.SnippetService.Snippet(userID, snippetID)
 	if err != nil {
@@ -58,7 +58,7 @@ func (sh SnippetHandler) handleGetSnippetByID(w http.ResponseWriter, r *http.Req
 
 // handleCreateSnippet
 func (sh SnippetHandler) handleCreateSnippet(w http.ResponseWriter, r *http.Request) {
-	userID := r.URL.Query().Get("userId")
+	userID := r.Header.Get("Authorization")
 
 	var newSnippet snippets.Snippet
 	err := json.NewDecoder(r.Body).Decode(&newSnippet)
@@ -82,7 +82,7 @@ func (sh SnippetHandler) handleCreateSnippet(w http.ResponseWriter, r *http.Requ
 
 // handlePatchSnippet
 func (sh SnippetHandler) handlePatchSnippet(w http.ResponseWriter, r *http.Request) {
-	userID := r.URL.Query().Get("userId")
+	userID := r.Header.Get("Authorization")
 	snippetID := mux.Vars(r)["snippetID"]
 
 	snippetToUpdate, err := sh.SnippetService.Snippet(userID, snippetID)
@@ -119,7 +119,7 @@ func (sh SnippetHandler) handlePatchSnippet(w http.ResponseWriter, r *http.Reque
 
 // handleDeleteSnippet
 func (sh SnippetHandler) handleDeleteSnippet(w http.ResponseWriter, r *http.Request) {
-	userID := r.URL.Query().Get("userId")
+	userID := r.Header.Get("Authorization")
 	snippetID := mux.Vars(r)["snippetID"]
 
 	err := sh.SnippetService.DeleteSnippet(userID, snippetID)
