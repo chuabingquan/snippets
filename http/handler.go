@@ -8,7 +8,8 @@ import (
 // Handler implements the http.Handler interface and acts as the main handler for the server,
 // redirecting requests to sub-handlers
 type Handler struct {
-	UserHandler *UserHandler
+	UserHandler    *UserHandler
+	SnippetHandler *SnippetHandler
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -18,11 +19,16 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mainResourceName := urlSegments[3]
+	resourceName := urlSegments[3]
 
-	if mainResourceName == "users" {
+	switch resourceName {
+	case "users":
 		h.UserHandler.ServeHTTP(w, r)
-	} else {
+		break
+	case "snippets":
+		h.SnippetHandler.ServeHTTP(w, r)
+		break
+	default:
 		http.NotFound(w, r)
 	}
 }

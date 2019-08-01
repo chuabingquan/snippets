@@ -43,8 +43,12 @@ func main() {
 	us := postgres.UserService{DB: db, HashUtilities: hu}
 	userHandler := http.NewUserHandler(us)
 
+	ss := postgres.SnippetService{DB: db}
+	snippetHandler := http.NewSnippetHandler(ss)
+
 	handler := http.Handler{
-		UserHandler: userHandler,
+		UserHandler:    userHandler,
+		SnippetHandler: snippetHandler,
 	}
 
 	server := http.Server{Handler: &handler, Addr: ":" + config["PORT"]}
