@@ -15,6 +15,7 @@ type User struct {
 // UserService provides a set of operations that can be applied on the User struct
 type UserService interface {
 	User(userID string) (User, error)
+	UserByUsername(username string) (User, error)
 	Users() ([]User, error)
 	CreateUser(u User) error
 	UpdateUser(updatedUser User) error

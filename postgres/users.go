@@ -24,6 +24,17 @@ func (us UserService) User(userID string) (snippets.User, error) {
 	return user, nil
 }
 
+// UserByUsername performs the same operation as User but takes in a username instead
+// of a userID as an argument
+func (us UserService) UserByUsername(username string) (snippets.User, error) {
+	var user snippets.User
+	err := us.DB.QueryRowx("SELECT * FROM account WHERE username=$1", username).StructScan(&user)
+	if err != nil {
+		return user, errors.New("Error retrieving user: " + err.Error())
+	}
+	return user, nil
+}
+
 // Users returns all users from the database in the form of a snippets.User slice
 func (us UserService) Users() ([]snippets.User, error) {
 	users := []snippets.User{}
