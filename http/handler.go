@@ -10,6 +10,7 @@ import (
 type Handler struct {
 	UserHandler    *UserHandler
 	SnippetHandler *SnippetHandler
+	AuthHandler    *AuthHandler
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -22,6 +23,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resourceName := urlSegments[3]
 
 	switch resourceName {
+	case "auth":
+		h.AuthHandler.ServeHTTP(w, r)
+		break
 	case "users":
 		h.UserHandler.ServeHTTP(w, r)
 		break

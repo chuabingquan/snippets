@@ -46,3 +46,13 @@ type HashUtilities interface {
 	HashAndSalt(s string) (string, error)
 	CompareHashWithString(hash string, s string) bool
 }
+
+// AuthenticationService provides a set of operations for performing authentication
+type AuthenticationService interface {
+	Authenticate(username string, password string) (bool, error)
+}
+
+// AuthorizationInfo represents the payload of the JSON Web Tokens issued
+type AuthorizationInfo struct {
+	UserID string
+}

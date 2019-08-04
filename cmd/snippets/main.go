@@ -6,9 +6,11 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"time"
 
 	"github.com/chuabingquan/snippets/bcrypt"
 	"github.com/chuabingquan/snippets/http"
+	"github.com/chuabingquan/snippets/http/jwt"
 	"github.com/chuabingquan/snippets/postgres"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -34,21 +36,24 @@ func main() {
 	}
 	defer db.Close()
 
-	hashCost, err := strconv.Atoi(config["HASH_COST"])
-	if err != nil {
-		log.Fatal("Failed to parse hash cost environment variable: " + err.Error())
+	jwtAuthenticator := jwt.Authenticator{
+		SigningKey: []byte(config["AUTH_SECRET"]),
+		ExpiryTime: time.Duration(toInt(config["AUTH_EXPIRY"])) * time.Minute,
 	}
+	hu := bcrypt.Utilities{HashCost: toInt(config["HASH_COST"])}
 
-	hu := bcrypt.Utilities{HashCost: hashCost}
 	us := postgres.UserService{DB: db, HashUtilities: hu}
-	userHandler := http.NewUserHandler(us)
-
 	ss := postgres.SnippetService{DB: db}
+	as := postgres.AuthenticationService{DB: db, HashUtilities: hu}
+
+	userHandler := http.NewUserHandler(us)
 	snippetHandler := http.NewSnippetHandler(ss)
+	authHandler := http.NewAuthHandler(as, us, jwtAuthenticator)
 
 	handler := http.Handler{
 		UserHandler:    userHandler,
 		SnippetHandler: snippetHandler,
+		AuthHandler:    authHandler,
 	}
 
 	server := http.Server{Handler: &handler, Addr: ":" + config["PORT"]}
@@ -66,6 +71,14 @@ func main() {
 	fmt.Println("Got signal:", s)
 }
 
+func toInt(str string) int {
+	val, err := strconv.Atoi(str)
+	if err != nil {
+		log.Fatal("Error parsing \"" + str + "\" to int: " + err.Error())
+	}
+	return val
+}
+
 func loadEnvironmentVariables() {
 	err := godotenv.Load()
 	if err != nil {
@@ -76,7 +89,7 @@ func loadEnvironmentVariables() {
 func getConfig() map[string]string {
 	config := make(map[string]string)
 	envNames := []string{"DB_PROTOCOL", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_NAME", "DB_SSLMODE",
-		"PORT", "HASH_COST"}
+		"PORT", "HASH_COST", "AUTH_SECRET", "AUTH_EXPIRY"}
 	for _, name := range envNames {
 		val, ok := os.LookupEnv(name)
 		if !ok {
