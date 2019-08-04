@@ -3,6 +3,8 @@ package jwt
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/chuabingquan/snippets"
@@ -17,8 +19,13 @@ type Authenticator struct {
 
 // GetAuthorizationInfo extracts and returns the authorization information of the owner
 // of the given authentication token
-func (a Authenticator) GetAuthorizationInfo(tokenString string) (snippets.AuthorizationInfo, error) {
+func (a Authenticator) GetAuthorizationInfo(r *http.Request) (snippets.AuthorizationInfo, error) {
 	authorizationInfo := snippets.AuthorizationInfo{}
+
+	tokenString, err := getTokenFromHeader(r)
+	if err != nil {
+		return authorizationInfo, err
+	}
 
 	token, err := jwt.Parse(tokenString, a.keyGetter)
 	if err != nil {
@@ -48,12 +55,30 @@ func (a Authenticator) GenerateToken(info snippets.AuthorizationInfo) (string, e
 }
 
 // Authenticate verifies the legitimacy and validity of an authentication token
-func (a Authenticator) Authenticate(tokenString string) (bool, error) {
-	_, err := jwt.Parse(tokenString, a.keyGetter)
+func (a Authenticator) Authenticate(r *http.Request) (bool, error) {
+	tokenString, err := getTokenFromHeader(r)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = jwt.Parse(tokenString, a.keyGetter)
 	if err != nil { // error occurs when token is invalid
 		return false, nil
 	}
 	return true, nil
+}
+
+// getTokenFromHeader extracts and returns an authentication token from the request header,
+// else, it returns an error should an invalid token format be supplied
+func getTokenFromHeader(r *http.Request) (string, error) {
+	tokenString := r.Header.Get("Authorization")
+	tokenParts := strings.Split(tokenString, " ")
+
+	if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+		return "", errors.New("Invalid token format supplied")
+	}
+
+	return tokenParts[1], nil
 }
 
 // keyGetter is a callback function for jwt.Parse that allows custom logic/validation to

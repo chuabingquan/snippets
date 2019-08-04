@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/chuabingquan/snippets"
 )
@@ -10,9 +9,9 @@ import (
 // Authenticator defines a set of operations that deals with the generation,
 // validation, and extraction of information from authentication tokens
 type Authenticator interface {
-	GetAuthorizationInfo(tokenString string) (snippets.AuthorizationInfo, error)
+	GetAuthorizationInfo(r *http.Request) (snippets.AuthorizationInfo, error)
 	GenerateToken(info snippets.AuthorizationInfo) (string, error)
-	Authenticate(tokenString string) (bool, error)
+	Authenticate(r *http.Request) (bool, error)
 }
 
 // verifyRoute is a middleware that permits/reject entry to a route depending
@@ -20,16 +19,7 @@ type Authenticator interface {
 func verifyRoute(a Authenticator) Adapter {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tokenString := r.Header.Get("Authorization")
-			tokenParts := strings.Split(tokenString, " ")
-
-			if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-				createResponse(w, http.StatusBadRequest, defaultResponse{
-					"Invalid token format supplied"})
-				return
-			}
-
-			ok, err := a.Authenticate(tokenParts[1])
+			ok, err := a.Authenticate(r)
 			if err != nil {
 				createResponse(w, http.StatusBadRequest, defaultResponse{
 					"Invalid token format supplied"})
