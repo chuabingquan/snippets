@@ -12,28 +12,38 @@ import (
 type SnippetHandler struct {
 	*mux.Router
 	SnippetService snippets.SnippetService
+	Authenticator  Authenticator
 }
 
 // NewSnippetHandler constructs a new SnippetHandler given a SnippetService implementation
-func NewSnippetHandler(ss snippets.SnippetService) *SnippetHandler {
+func NewSnippetHandler(ss snippets.SnippetService, auth Authenticator) *SnippetHandler {
 	h := &SnippetHandler{
 		Router:         mux.NewRouter(),
 		SnippetService: ss,
+		Authenticator:  auth,
 	}
 
-	h.Handle("/api/v0/snippets", Adapt(http.HandlerFunc(h.handleGetSnippets))).Methods("GET")
-	h.Handle("/api/v0/snippets/{snippetID}", Adapt(http.HandlerFunc(h.handleGetSnippetByID))).Methods("GET")
-	h.Handle("/api/v0/snippets", Adapt(http.HandlerFunc(h.handleCreateSnippet))).Methods("POST")
-	h.Handle("/api/v0/snippets/{snippetID}", Adapt(http.HandlerFunc(h.handlePatchSnippet))).Methods("PATCH")
-	h.Handle("/api/v0/snippets/{snippetID}", Adapt(http.HandlerFunc(h.handleDeleteSnippet))).Methods("DELETE")
+	verifyUser := verifyRoute(auth)
+
+	h.Handle("/api/v0/snippets", Adapt(http.HandlerFunc(h.handleGetSnippets), verifyUser)).Methods("GET")
+	h.Handle("/api/v0/snippets/{snippetID}", Adapt(http.HandlerFunc(h.handleGetSnippetByID), verifyUser)).Methods("GET")
+	h.Handle("/api/v0/snippets", Adapt(http.HandlerFunc(h.handleCreateSnippet), verifyUser)).Methods("POST")
+	h.Handle("/api/v0/snippets/{snippetID}", Adapt(http.HandlerFunc(h.handlePatchSnippet), verifyUser)).Methods("PATCH")
+	h.Handle("/api/v0/snippets/{snippetID}", Adapt(http.HandlerFunc(h.handleDeleteSnippet), verifyUser)).Methods("DELETE")
 
 	return h
 }
 
 // handleGetSnippets
 func (sh SnippetHandler) handleGetSnippets(w http.ResponseWriter, r *http.Request) {
-	userID := r.Header.Get("Authorization")
-	snippets, err := sh.SnippetService.Snippets(userID)
+	userInfo, err := sh.Authenticator.GetAuthorizationInfo(r)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when retrieving snippets"})
+		return
+	}
+
+	snippets, err := sh.SnippetService.Snippets(userInfo.UserID)
 	if err != nil {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
 			"An unexpected error occurred when retrieving snippets"})
@@ -45,9 +55,14 @@ func (sh SnippetHandler) handleGetSnippets(w http.ResponseWriter, r *http.Reques
 // handleGetSnippetByID
 func (sh SnippetHandler) handleGetSnippetByID(w http.ResponseWriter, r *http.Request) {
 	snippetID := mux.Vars(r)["snippetID"]
-	userID := r.Header.Get("Authorization")
+	userInfo, err := sh.Authenticator.GetAuthorizationInfo(r)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when getting requested snippet"})
+		return
+	}
 
-	snippet, err := sh.SnippetService.Snippet(userID, snippetID)
+	snippet, err := sh.SnippetService.Snippet(userInfo.UserID, snippetID)
 	if err != nil {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
 			"An unexpected error occurred when getting requested snippet"})
@@ -58,10 +73,15 @@ func (sh SnippetHandler) handleGetSnippetByID(w http.ResponseWriter, r *http.Req
 
 // handleCreateSnippet
 func (sh SnippetHandler) handleCreateSnippet(w http.ResponseWriter, r *http.Request) {
-	userID := r.Header.Get("Authorization")
+	userInfo, err := sh.Authenticator.GetAuthorizationInfo(r)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when creating snippet"})
+		return
+	}
 
 	var newSnippet snippets.Snippet
-	err := json.NewDecoder(r.Body).Decode(&newSnippet)
+	err = json.NewDecoder(r.Body).Decode(&newSnippet)
 	if err != nil {
 		createResponse(w, http.StatusBadRequest, defaultResponse{
 			"Invalid request body"})
@@ -69,7 +89,7 @@ func (sh SnippetHandler) handleCreateSnippet(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Owner should ideally be assigned to userId from access token
-	newSnippet.Owner = userID
+	newSnippet.Owner = userInfo.UserID
 
 	err = sh.SnippetService.CreateSnippet(newSnippet)
 	if err != nil {
@@ -82,10 +102,15 @@ func (sh SnippetHandler) handleCreateSnippet(w http.ResponseWriter, r *http.Requ
 
 // handlePatchSnippet
 func (sh SnippetHandler) handlePatchSnippet(w http.ResponseWriter, r *http.Request) {
-	userID := r.Header.Get("Authorization")
 	snippetID := mux.Vars(r)["snippetID"]
+	userInfo, err := sh.Authenticator.GetAuthorizationInfo(r)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when updating snippet"})
+		return
+	}
 
-	snippetToUpdate, err := sh.SnippetService.Snippet(userID, snippetID)
+	snippetToUpdate, err := sh.SnippetService.Snippet(userInfo.UserID, snippetID)
 	if err != nil {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
 			"An unexpected error occurred when getting requested snippet"})
@@ -119,10 +144,15 @@ func (sh SnippetHandler) handlePatchSnippet(w http.ResponseWriter, r *http.Reque
 
 // handleDeleteSnippet
 func (sh SnippetHandler) handleDeleteSnippet(w http.ResponseWriter, r *http.Request) {
-	userID := r.Header.Get("Authorization")
 	snippetID := mux.Vars(r)["snippetID"]
+	userInfo, err := sh.Authenticator.GetAuthorizationInfo(r)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when deleting snippet"})
+		return
+	}
 
-	err := sh.SnippetService.DeleteSnippet(userID, snippetID)
+	err = sh.SnippetService.DeleteSnippet(userInfo.UserID, snippetID)
 	if err != nil {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
 			"An unexpected error occurred when deleting snippet"})

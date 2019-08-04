@@ -11,21 +11,25 @@ import (
 // UserHandler is a sub-router that handles requests related to operations on Users
 type UserHandler struct {
 	*mux.Router
-	UserService snippets.UserService
+	UserService   snippets.UserService
+	Authenticator Authenticator
 }
 
 // NewUserHandler constructs a new UserHandler given a UserService implementation
-func NewUserHandler(us snippets.UserService) *UserHandler {
+func NewUserHandler(us snippets.UserService, auth Authenticator) *UserHandler {
 	h := &UserHandler{
-		Router:      mux.NewRouter(),
-		UserService: us,
+		Router:        mux.NewRouter(),
+		UserService:   us,
+		Authenticator: auth,
 	}
 
-	h.Handle("/api/v0/users", Adapt(http.HandlerFunc(h.handleGetUsers))).Methods("GET")
-	h.Handle("/api/v0/users/{userID}", Adapt(http.HandlerFunc(h.handleGetUserByID))).Methods("GET")
-	h.Handle("/api/v0/users", Adapt(http.HandlerFunc(h.handleCreateUser))).Methods("POST")
-	h.Handle("/api/v0/users/{userID}", Adapt(http.HandlerFunc(h.handlePatchUser))).Methods("PATCH")
-	h.Handle("/api/v0/users/{userID}", Adapt(http.HandlerFunc(h.handleDeleteUser))).Methods("DELETE")
+	verifyUser := verifyRoute(auth)
+
+	h.Handle("/api/v0/users", Adapt(http.HandlerFunc(h.handleGetUsers), verifyUser)).Methods("GET")
+	h.Handle("/api/v0/users/{userID}", Adapt(http.HandlerFunc(h.handleGetUserByID), verifyUser)).Methods("GET")
+	h.Handle("/api/v0/users", Adapt(http.HandlerFunc(h.handleCreateUser), verifyUser)).Methods("POST")
+	h.Handle("/api/v0/users/{userID}", Adapt(http.HandlerFunc(h.handlePatchUser), verifyUser)).Methods("PATCH")
+	h.Handle("/api/v0/users/{userID}", Adapt(http.HandlerFunc(h.handleDeleteUser), verifyUser)).Methods("DELETE")
 
 	return h
 }

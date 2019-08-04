@@ -46,8 +46,8 @@ func main() {
 	ss := postgres.SnippetService{DB: db}
 	as := postgres.AuthenticationService{DB: db, HashUtilities: hu}
 
-	userHandler := http.NewUserHandler(us)
-	snippetHandler := http.NewSnippetHandler(ss)
+	userHandler := http.NewUserHandler(us, jwtAuthenticator)
+	snippetHandler := http.NewSnippetHandler(ss, jwtAuthenticator)
 	authHandler := http.NewAuthHandler(as, us, jwtAuthenticator)
 
 	handler := http.Handler{
