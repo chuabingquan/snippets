@@ -53,7 +53,7 @@ func (ah AuthHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := ah.UserService.UserByUsername(credentials["username"])
-	if err != nil {
+	if err != nil || user == (snippets.User{}) {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
 			"An unexpected error occurred when authenticating login"})
 		return

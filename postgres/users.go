@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"database/sql"
 	"errors"
 
 	"github.com/chuabingquan/snippets"
@@ -18,7 +19,9 @@ type UserService struct {
 func (us UserService) User(userID string) (snippets.User, error) {
 	var user snippets.User
 	err := us.DB.QueryRowx("SELECT * FROM account WHERE id=$1", userID).StructScan(&user)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return user, nil
+	} else if err != nil {
 		return user, errors.New("Error retrieving user: " + err.Error())
 	}
 	return user, nil
@@ -29,7 +32,9 @@ func (us UserService) User(userID string) (snippets.User, error) {
 func (us UserService) UserByUsername(username string) (snippets.User, error) {
 	var user snippets.User
 	err := us.DB.QueryRowx("SELECT * FROM account WHERE username=$1", username).StructScan(&user)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return user, nil
+	} else if err != nil {
 		return user, errors.New("Error retrieving user: " + err.Error())
 	}
 	return user, nil
