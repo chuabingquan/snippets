@@ -68,6 +68,11 @@ func (sh SnippetHandler) handleGetSnippetByID(w http.ResponseWriter, r *http.Req
 			"An unexpected error occurred when getting requested snippet"})
 		return
 	}
+	if snippet == (snippets.Snippet{}) {
+		createResponse(w, http.StatusNotFound, defaultResponse{
+			"Error, requested snippet is not found"})
+		return
+	}
 	createResponse(w, http.StatusOK, snippet)
 }
 
@@ -116,6 +121,11 @@ func (sh SnippetHandler) handlePatchSnippet(w http.ResponseWriter, r *http.Reque
 			"An unexpected error occurred when getting requested snippet"})
 		return
 	}
+	if snippetToUpdate == (snippets.Snippet{}) {
+		createResponse(w, http.StatusNotFound, defaultResponse{
+			"Error, snippet to update is not found"})
+		return
+	}
 
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
@@ -149,6 +159,18 @@ func (sh SnippetHandler) handleDeleteSnippet(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
 			"An unexpected error occurred when deleting snippet"})
+		return
+	}
+
+	snippetToDelete, err := sh.SnippetService.Snippet(userInfo.UserID, snippetID)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when deleting snippet"})
+		return
+	}
+	if snippetToDelete == (snippets.Snippet{}) {
+		createResponse(w, http.StatusNotFound, defaultResponse{
+			"Error, snippet to delete is not found"})
 		return
 	}
 

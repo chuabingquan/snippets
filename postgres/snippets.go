@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"database/sql"
 	"errors"
 
 	"github.com/chuabingquan/snippets"
@@ -17,7 +18,9 @@ type SnippetService struct {
 func (ss SnippetService) Snippet(userID string, snippetID string) (snippets.Snippet, error) {
 	var snippet snippets.Snippet
 	err := ss.DB.QueryRowx("SELECT * FROM snippet WHERE id=$1 AND account_id=$2", snippetID, userID).StructScan(&snippet)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return snippet, nil
+	} else if err != nil {
 		return snippet, errors.New("Error retrieving snippet: " + err.Error())
 	}
 	return snippet, nil
