@@ -93,7 +93,6 @@ func (sh SnippetHandler) handleCreateSnippet(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Owner should ideally be assigned to userId from access token
 	newSnippet.Owner = userInfo.UserID
 
 	err = sh.SnippetService.CreateSnippet(newSnippet)
