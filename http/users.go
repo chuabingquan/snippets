@@ -27,7 +27,7 @@ func NewUserHandler(us snippets.UserService, auth Authenticator) *UserHandler {
 
 	h.Handle("/api/v0/users", Adapt(http.HandlerFunc(h.handleGetUsers), verifyUser)).Methods("GET")
 	h.Handle("/api/v0/users/{userID}", Adapt(http.HandlerFunc(h.handleGetUserByID), verifyUser)).Methods("GET")
-	h.Handle("/api/v0/users", Adapt(http.HandlerFunc(h.handleCreateUser), verifyUser)).Methods("POST")
+	h.Handle("/api/v0/users", Adapt(http.HandlerFunc(h.handleCreateUser))).Methods("POST")
 	h.Handle("/api/v0/users/{userID}", Adapt(http.HandlerFunc(h.handlePatchUser), verifyUser)).Methods("PATCH")
 	h.Handle("/api/v0/users/{userID}", Adapt(http.HandlerFunc(h.handleDeleteUser), verifyUser)).Methods("DELETE")
 
@@ -47,8 +47,18 @@ func (uh UserHandler) handleGetUsers(w http.ResponseWriter, r *http.Request) {
 
 // handleGetUserByID
 func (uh UserHandler) handleGetUserByID(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID := vars["userID"]
+	userID := mux.Vars(r)["userID"]
+	userInfo, err := uh.Authenticator.GetAuthorizationInfo(r)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when getting requested user"})
+		return
+	}
+	if userInfo.UserID != userID {
+		createResponse(w, http.StatusNotFound, defaultResponse{
+			"Error, requested user is not found"})
+		return
+	}
 
 	user, err := uh.UserService.User(userID)
 	if err != nil {
@@ -87,10 +97,22 @@ func (uh UserHandler) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 // handlePatchUser
 func (uh UserHandler) handlePatchUser(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["userID"]
+	userInfo, err := uh.Authenticator.GetAuthorizationInfo(r)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when updating user"})
+		return
+	}
+	if userInfo.UserID != userID {
+		createResponse(w, http.StatusNotFound, defaultResponse{
+			"Error, user to update is not found"})
+		return
+	}
+
 	userToUpdate, err := uh.UserService.User(userID)
 	if err != nil {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
-			"An unexpected error occurred when getting requested user"})
+			"An unexpected error occurred when updating user"})
 		return
 	}
 	if userToUpdate == (snippets.User{}) {
@@ -130,6 +152,18 @@ func (uh UserHandler) handlePatchUser(w http.ResponseWriter, r *http.Request) {
 // handleDeleteUser
 func (uh UserHandler) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["userID"]
+	userInfo, err := uh.Authenticator.GetAuthorizationInfo(r)
+	if err != nil {
+		createResponse(w, http.StatusInternalServerError, defaultResponse{
+			"An unexpected error occurred when deleting user"})
+		return
+	}
+	if userInfo.UserID != userID {
+		createResponse(w, http.StatusNotFound, defaultResponse{
+			"Error, user to delete is not found"})
+		return
+	}
+
 	userToDelete, err := uh.UserService.User(userID)
 	if err != nil {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
