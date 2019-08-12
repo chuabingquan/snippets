@@ -84,6 +84,12 @@ func (uh UserHandler) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = newUser.Validate()
+	if err != nil {
+		createResponse(w, http.StatusBadRequest, err)
+		return
+	}
+
 	err = uh.UserService.CreateUser(newUser)
 	if err != nil {
 		createResponse(w, http.StatusInternalServerError, defaultResponse{
